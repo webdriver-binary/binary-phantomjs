@@ -11,6 +11,7 @@ namespace Vaimo\PhantomInstaller;
 
 use Composer\Composer;
 use Composer\Cache;
+use Composer\Config;
 use Composer\Downloader\TransportException;
 use Composer\IO\BaseIO as IO;
 use Composer\IO\IOInterface;
@@ -34,6 +35,11 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
     protected $io;
 
     /**
+     * @var Config
+     */
+    protected $config;
+
+    /**
      * @var Cache
      */
     protected $cache;
@@ -42,6 +48,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
     {
         $this->composer = $composer;
         $this->io = $io;
+        $this->config = $this->composer->getConfig();
 
         $this->cache = new Cache(
             $this->io,
