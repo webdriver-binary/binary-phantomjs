@@ -42,7 +42,6 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
     {
         $this->composer = $composer;
         $this->io = $io;
-        throw new \Exception('test');
 
         $this->cache = new Cache(
             $this->io,

@@ -18,8 +18,6 @@ class InstallerTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        parent::setUp();
-
         $mockComposer = $this->getMockComposer();
         $mockIO = $this->getMockIO();
         $this->object = new Installer($mockComposer, $mockIO);
