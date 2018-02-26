@@ -20,14 +20,12 @@
         "phpunit/phpunit": "^4.8"
     },
     "extra": {
-        "class": "PhantomInstaller\\Installer"
+        "class": "Vaimo\\PhantomInstaller\\Plugin"
     },
     "autoload": {
         "psr-4": {
-            "PhantomInstaller\\Test\\" : "tests/"
-        },
-        "psr-0": {
-            "PhantomInstaller\\": "src/"
+            "PhantomInstaller\\Test\\" : "tests/",
+            "Vaimo\\PhantomInstaller\\": "src"
         }
     }
 }

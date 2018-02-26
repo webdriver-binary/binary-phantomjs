@@ -1,6 +1,5 @@
 <?php
-
-/*
+/**
  * This file is part of the "jakoch/phantomjs-installer" package.
  *
  * Copyright (c) 2013-2017 Jens-André Koch <jakoch@web.de>
@@ -8,10 +7,10 @@
  * The content is released under the MIT License. Please view
  * the LICENSE file that was distributed with this source code.
  */
-
 namespace PhantomInstaller;
 
 use Composer\Composer;
+use Composer\Cache;
 use Composer\Downloader\TransportException;
 use Composer\IO\BaseIO as IO;
 use Composer\Package\Package;
@@ -21,106 +20,66 @@ use Composer\Script\Event;
 use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\Plugin\PluginInterface;
 
-class Installer implements PluginInterface, EventSubscriberInterface
+class Plugin implements PluginInterface, EventSubscriberInterface
 {
-    const PHANTOMJS_NAME = 'PhantomJS';
+    const PACKAGE_NAME = 'vaimo/phantomjs-installer';
 
-    const PHANTOMJS_TARGETDIR = '/jakoch/phantomjs';
-
-    const PACKAGE_NAME = 'jakoch/phantomjs-installer';
-
-    /** @var Composer */
+    /**
+     * @var Composer
+     */
     protected $composer;
 
-    /** @var IO */
+    /**
+     * @var IO
+     */
     protected $io;
+
+    /**
+     * @var Cache
+     */
+    protected $cache;
+
+    public function activate(Composer $composer, IOInterface $io)
+    {
+        $this->composer = $composer;
+        $this->io = $io;
+
+        $this->cache = new Cache(
+            $this->io,
+            implode(DIRECTORY_SEPARATOR, [
+                $this->config->get('cache-dir'),
+                'files',
+                'phantomjs-installer',
+                'downloaded-bin'
+            ])
+        );
+    }
 
     public static function getSubscribedEvents()
     {
         return array(
-            ScriptEvents::POST_INSTALL_CMD => 'onPostInstallCmd',
-            ScriptEvents::POST_UPDATE_CMD => 'onPostUpdateCmd',
+            ScriptEvents::POST_INSTALL_CMD => 'installPhantomJs',
+            ScriptEvents::POST_UPDATE_CMD => 'installPhantomJs',
         );
     }
 
-    /**
-     * @return Composer
-     */
-    public function getComposer()
+    public function installPhantomJs(Event $event)
     {
-        return $this->composer;
-    }
+        $binDir = $config->get('bin-dir');
+        $targetDir = $this->cache->getRoot();
 
-    /**
-     * @param Composer $composer
-     * @return static
-     */
-    public function setComposer(Composer $composer)
-    {
-        $this->composer = $composer;
-        return $this;
-    }
-
-    /**
-     * @return IO
-     */
-    public function getIO()
-    {
-        return $this->io;
-    }
-
-    /**
-     * @param IO $io
-     * @return static
-     */
-    public function setIO(IO $io)
-    {
-        $this->io = $io;
-        return $this;
-    }
-
-    public function __construct(Composer $composer, IO $io)
-    {
-        $this->setComposer($composer);
-        $this->setIO($io);
-    }
-
-    /**
-     * installPhantomJS is the main function of the install script.
-     *
-     * It installs PhantomJs into the defined /bin folder,
-     * taking operating system dependend archives into account.
-     *
-     * You need to invoke it from the scripts section of your
-     * "composer.json" file as "post-install-cmd" or "post-update-cmd".
-     *
-     * @param Event $event
-     */
-    public static function installPhantomJS(Event $event)
-    {
-        $installer = new static($event->getComposer(), $event->getIO());
-        return $installer->__invoke();
-    }
-
-    public function __invoke()
-    {
         $version = $this->getVersion();
 
-        $config = $this->getComposer()->getConfig();
-
-        $binDir = $config->get('bin-dir');
-
-        // the installation folder depends on the vendor-dir (default prefix is './vendor')
-        $targetDir = $config->get('vendor-dir') . static::PHANTOMJS_TARGETDIR;
-
-        $io = $this->getIO();
+        $config = $this->composer->getConfig();
 
         // do not install a lower or equal version
         $phantomJsBinary = $this->getPhantomJsBinary($binDir);
         if ($phantomJsBinary) {
             $installedVersion = $this->getPhantomJsVersionFromBinary($phantomJsBinary);
             if (version_compare($version, $installedVersion) !== 1) {
-                $io->write('   - PhantomJS v' . $installedVersion . ' is already installed. Skipping the installation.');
+                $this->io->write(
+                    '   - PhantomJS v' . $installedVersion . ' is already installed. Skipping the installation.'
+                );
                 return;
             }
         }
@@ -141,7 +100,7 @@ class Installer implements PluginInterface, EventSubscriberInterface
      */
     public function getPhantomJsVersionFromBinary($pathToBinary)
     {
-        $io = $this->getIO();
+        $io = $this->io;
 
         try {
             $cmd = escapeshellarg($pathToBinary) . ' -v';
@@ -189,8 +148,8 @@ class Installer implements PluginInterface, EventSubscriberInterface
      */
     public function download($targetDir, $version)
     {
-        $io = $this->getIO();
-        $downloadManager = $this->getComposer()->getDownloadManager();
+        $io = $this->io;
+        $downloadManager = $this->composer->getDownloadManager();
         $retries = count($this->getPhantomJsVersions());
 
         while ($retries--) {
@@ -231,7 +190,7 @@ class Installer implements PluginInterface, EventSubscriberInterface
         $versionParser = new VersionParser();
         $normVersion = $versionParser->normalize($version);
 
-        $package = new Package(static::PHANTOMJS_NAME, $normVersion, $version);
+        $package = new Package('PhantomJS', $normVersion, $version);
         $package->setTargetDir($targetDir);
         $package->setInstallationSource('dist');
         $package->setDistType(pathinfo($url, PATHINFO_EXTENSION) === 'zip' ? 'zip' : 'tar'); // set zip, tarball
@@ -289,7 +248,7 @@ class Installer implements PluginInterface, EventSubscriberInterface
      */
     public function getVersion()
     {
-        $composer = $this->getComposer();
+        $composer = $this->composer;
 
         // try getting the version from the local repository
         $packages = $composer->getRepositoryManager()->getLocalRepository()->getCanonicalPackages();
@@ -528,7 +487,7 @@ class Installer implements PluginInterface, EventSubscriberInterface
     public function getCdnUrl($version)
     {
         $url = '';
-        $extraData = $this->getComposer()->getPackage()->getExtra();
+        $extraData = $this->composer->getPackage()->getExtra();
 
         // override the detection of the default URL
         // by checking for an env var and returning early
