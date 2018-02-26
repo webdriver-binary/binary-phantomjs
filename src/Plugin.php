@@ -72,12 +72,10 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
     public function installPhantomJs(Event $event)
     {
-        $binDir = $config->get('bin-dir');
+        $binDir = $this->config->get('bin-dir');
         $targetDir = $this->cache->getRoot();
 
         $version = $this->getVersion();
-
-        $config = $this->composer->getConfig();
 
         // do not install a lower or equal version
         $phantomJsBinary = $this->getPhantomJsBinary($binDir);
