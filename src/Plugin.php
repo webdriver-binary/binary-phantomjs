@@ -7,20 +7,19 @@
  * The content is released under the MIT License. Please view
  * the LICENSE file that was distributed with this source code.
  */
-namespace PhantomInstaller;
+namespace Vaimo\PhantomInstaller;
 
 use Composer\Composer;
 use Composer\Cache;
 use Composer\Downloader\TransportException;
 use Composer\IO\BaseIO as IO;
+use Composer\IO\IOInterface;
 use Composer\Package\Package;
 use Composer\Package\RootPackageInterface;
 use Composer\Package\Version\VersionParser;
 use Composer\Script\Event;
-use Composer\EventDispatcher\EventSubscriberInterface;
-use Composer\Plugin\PluginInterface;
 
-class Plugin implements PluginInterface, EventSubscriberInterface
+class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatcher\EventSubscriberInterface
 {
     const PACKAGE_NAME = 'vaimo/phantomjs-installer';
 
@@ -43,6 +42,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $this->composer = $composer;
         $this->io = $io;
+        throw new \Exception('test');
 
         $this->cache = new Cache(
             $this->io,

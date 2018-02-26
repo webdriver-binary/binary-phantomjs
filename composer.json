@@ -1,13 +1,16 @@
 {
     "name": "vaimo/phantomjs-installer",
-    "description": "A Composer package which installs the PhantomJS binary (Linux, Windows, Mac) into `/bin` of your project.",
-    "type": "custom-installer",
-    "keywords": ["phantomjs", "headless", "binaries"],
+    "type": "composer-plugin",
     "license": "MIT",
+    "description": "A Composer package which installs the PhantomJS binary (Linux, Windows, Mac) into `bin` of your project",
     "authors": [
         {
             "name": "Jens-André Koch",
             "email": "jakoch@web.de"
+        },
+        {
+            "name": "Allan Paiste",
+            "email": "allan.paiste@vaimo.com"
         }
     ],
     "require": {
@@ -19,12 +22,13 @@
         "composer/composer": "^1.2",
         "phpunit/phpunit": "^4.8"
     },
+    "keywords": ["phantomjs", "headless", "binaries", "downloader"],
     "extra": {
         "class": "Vaimo\\PhantomInstaller\\Plugin"
     },
     "autoload": {
         "psr-4": {
-            "PhantomInstaller\\Test\\" : "tests/",
+            "Vaimo\\PhantomInstaller\\Test\\" : "tests",
             "Vaimo\\PhantomInstaller\\": "src"
         }
     }

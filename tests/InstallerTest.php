@@ -1,6 +1,5 @@
 <?php
-
-namespace PhantomInstaller\Test;
+namespace Vaimo\PhantomInstaller\Test;
 
 use PhantomInstaller\Installer;
 use PhantomInstaller\PhantomBinary;
@@ -16,7 +15,7 @@ class InstallerTest extends \PHPUnit_Framework_TestCase
     protected $bakEnvVars = array();
 
     protected $bakServerVars = array();
-    
+
     protected function setUp()
     {
         parent::setUp();
