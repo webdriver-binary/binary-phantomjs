@@ -12,12 +12,15 @@
     ],
     "require": {
         "php": ">5.3",
-        "ext-bz2": "*",
-        "ext-openssl": "*"
+        "ext-openssl": "*",
+        "composer-plugin-api": "^1.0"
     },
     "require-dev": {
         "composer/composer": "^1.2",
         "phpunit/phpunit": "^4.8"
+    },
+    "extra": {
+        "class": "PhantomInstaller\\Installer"
     },
     "autoload": {
         "psr-4": {

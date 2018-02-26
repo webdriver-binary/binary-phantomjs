@@ -18,8 +18,10 @@ use Composer\Package\Package;
 use Composer\Package\RootPackageInterface;
 use Composer\Package\Version\VersionParser;
 use Composer\Script\Event;
+use Composer\EventDispatcher\EventSubscriberInterface;
+use Composer\Plugin\PluginInterface;
 
-class Installer
+class Installer implements PluginInterface, EventSubscriberInterface
 {
     const PHANTOMJS_NAME = 'PhantomJS';
 
@@ -32,6 +34,14 @@ class Installer
 
     /** @var IO */
     protected $io;
+
+    public static function getSubscribedEvents()
+    {
+        return array(
+            ScriptEvents::POST_INSTALL_CMD => 'onPostInstallCmd',
+            ScriptEvents::POST_UPDATE_CMD => 'onPostUpdateCmd',
+        );
+    }
 
     /**
      * @return Composer
