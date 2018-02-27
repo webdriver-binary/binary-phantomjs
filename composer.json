@@ -1,5 +1,5 @@
 {
-    "name": "vaimo/phantomjs-installer",
+    "name": "vaimo/phantomjs",
     "type": "composer-plugin",
     "license": "MIT",
     "description": "A Composer package which installs the PhantomJS binary (Linux, Windows, Mac) into `bin` of your project",
