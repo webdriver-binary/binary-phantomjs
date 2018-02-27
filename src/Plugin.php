@@ -104,8 +104,6 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         $requestedVersion = $this->getRequestedVersion();
         $installedVersion = $this->getInstalledVersion();
 
-        $requestedVersion = '2.1.1';
-
         if ($installedVersion && version_compare($requestedVersion, $installedVersion) !== 1) {
             return;
         }
@@ -297,9 +295,11 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
     public function getRequestedVersion()
     {
-        $version = $this->getPackageVersion($this->getOwnerPackage());
+        $version = $this->getPackageVersion(
+            $this->getOwnerPackage()
+        );
 
-        return implode('.', array_pad(array_slice(explode('.', $version), 0, 3), 3, '0'));
+        return implode('.', array_pad(array_slice(explode('.', str_replace('-', '.', $version)), 0, 3), 3, '0'));
     }
 
     public function installBinary(\Composer\Package\Package $package, $binDir)
