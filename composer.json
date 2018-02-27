@@ -19,16 +19,14 @@
         "composer-plugin-api": "^1.0"
     },
     "require-dev": {
-        "composer/composer": "^1.2",
-        "phpunit/phpunit": "^4.8"
+        "composer/composer": "^1.2"
     },
-    "keywords": ["phantomjs", "headless", "binaries", "downloader"],
+    "keywords": ["phantomjs", "headless", "binaries", "downloader", "phantom-installer"],
     "extra": {
         "class": "Vaimo\\PhantomInstaller\\Plugin"
     },
     "autoload": {
         "psr-4": {
-            "Vaimo\\PhantomInstaller\\Test\\" : "tests",
             "Vaimo\\PhantomInstaller\\": "src"
         }
     }
