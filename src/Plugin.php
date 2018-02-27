@@ -108,7 +108,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
             return;
         }
 
-        $this->io->write(sprintf('<info>Installing PhantomJs v%s</info>', $requestedVersion));
+        $this->io->write(sprintf('<info>Installing <comment>PhantomJs</comment> (v%s)</info>', $requestedVersion));
 
         $this->cache->clear();
         $downloadDir = rtrim($this->cache->getRoot(), DIRECTORY_SEPARATOR);
