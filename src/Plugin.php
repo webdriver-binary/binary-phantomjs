@@ -64,13 +64,15 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
         $this->fileSystem = new \Composer\Util\Filesystem();
 
+        $package = $this->getOwnerPackage();
+
         $this->cache = new \Composer\Cache(
             $this->io,
             implode(DIRECTORY_SEPARATOR, array(
                 $this->config->get('cache-dir'),
                 'files',
-                'phantomjs-installer',
-                'downloaded-bin'
+                $package->getName(),
+                'downloads'
             ))
         );
     }
@@ -110,8 +112,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
         $this->io->write(sprintf('<info>Installing <comment>PhantomJs</comment> (v%s)</info>', $requestedVersion));
 
-        $this->cache->clear();
-        $downloadDir = rtrim($this->cache->getRoot(), DIRECTORY_SEPARATOR);
+        $downloadDir = rtrim($this->cache->getRoot(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $requestedVersion;
 
         if (!$package = $this->downloadRelease($requestedVersion, $downloadDir)) {
             return;
@@ -368,7 +369,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         }
 
         if ($os === 'macosx') {
-            $file = 'phantomjs-{{VERSION}}-macosx.zip';
+            $template = 'phantomjs-{{VERSION}}-macosx.zip';
         }
 
         return str_replace('{{VERSION}}', $version, $template);
