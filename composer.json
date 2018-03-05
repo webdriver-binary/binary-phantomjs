@@ -21,9 +21,16 @@
     "require-dev": {
         "composer/composer": "^1.2"
     },
-    "keywords": ["phantomjs", "headless", "binaries", "downloader", "phantom-installer"],
+    "keywords": [
+        "phantomjs",
+        "headless",
+        "binaries",
+        "downloader",
+        "phantom-installer"
+    ],
     "extra": {
-        "class": "Vaimo\\PhantomInstaller\\Plugin"
+        "class": "Vaimo\\PhantomInstaller\\Plugin",
+        "changelog-file": "changelog.json"
     },
     "autoload": {
         "psr-4": {

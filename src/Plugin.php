@@ -9,42 +9,25 @@
  */
 namespace Vaimo\PhantomInstaller;
 
-use Composer\Composer;
-use Composer\Config;
-use Composer\Downloader\TransportException;
-use Composer\IO\BaseIO as IO;
-use Composer\Factory;
-use Composer\IO\IOInterface;
-use Composer\Package\RootPackageInterface;
-use Composer\Package\Version\VersionParser;
-use Composer\Script\Event;
-use Composer\Script\ScriptEvents;
-use Composer\Repository\RepositoryInterface;
-
 class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatcher\EventSubscriberInterface
 {
     const PHANTOMJS_CDNURL_DEFAULT = 'https://api.bitbucket.org/2.0/repositories/ariya/phantomjs/downloads/';
     const OS_TYPE_UNKNOWN = 'unknown';
 
     /**
-     * @var Composer
+     * @var \Composer\Composer
      */
     protected $composer;
 
     /**
-     * @var IO
+     * @var \Composer\IO\IOInterface
      */
     protected $io;
 
     /**
-     * @var Config
+     * @var \Composer\Config
      */
     protected $config;
-
-    /**
-     * @var Cache
-     */
-    protected $cache;
 
     /**
      * @var \Composer\Util\Filesystem
@@ -56,17 +39,20 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
      */
     protected $ownerPackage;
 
-    public function activate(Composer $composer, IOInterface $io)
+    public function activate(\Composer\Composer $composer, \Composer\IO\IOInterface $io)
     {
         $this->composer = $composer;
         $this->io = $io;
         $this->config = $this->composer->getConfig();
 
         $this->fileSystem = new \Composer\Util\Filesystem();
+    }
 
+    public function getDownloadRoot($requestedVersion)
+    {
         $package = $this->getOwnerPackage();
 
-        $this->cache = new \Composer\Cache(
+        $cache = new \Composer\Cache(
             $this->io,
             implode(DIRECTORY_SEPARATOR, array(
                 $this->config->get('cache-dir'),
@@ -75,13 +61,15 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
                 'downloads'
             ))
         );
+
+        return rtrim($cache->getRoot(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $requestedVersion;
     }
 
     public static function getSubscribedEvents()
     {
         return array(
-            ScriptEvents::POST_INSTALL_CMD => 'installPhantomJs',
-            ScriptEvents::POST_UPDATE_CMD => 'installPhantomJs',
+            \Composer\Script\ScriptEvents::POST_INSTALL_CMD => 'installPhantomJs',
+            \Composer\Script\ScriptEvents::POST_UPDATE_CMD => 'installPhantomJs',
         );
     }
 
@@ -96,7 +84,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         return $this->getPhantomJsVersionFromBinary($binPath);
     }
 
-    public function installPhantomJs(Event $event)
+    public function installPhantomJs(\Composer\Script\Event $event)
     {
         if ($this->getOS() === self::OS_TYPE_UNKNOWN) {
             $this->io->error('PhantomJs installation skipped: failed to determine the OS type');
@@ -110,11 +98,27 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
             return;
         }
 
-        $this->io->write(sprintf('<info>Installing <comment>PhantomJs</comment> (v%s)</info>', $requestedVersion));
+        if ($remoteFile = $this->getDownloadUrl()) {
+            $extension = pathinfo($remoteFile, PATHINFO_EXTENSION);
 
-        $downloadDir = rtrim($this->cache->getRoot(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $requestedVersion;
+            if (!extension_loaded($extension)) {
+                $this->io->write(
+                    sprintf(
+                        '<warning>Skipping PhantomJs download, missing PHP extension to '
+                        . 'handle the binary extraction: %s</warning>',
+                        $extension
+                    )
+                );
 
-        if (!$package = $this->downloadRelease($requestedVersion, $downloadDir)) {
+                return;
+            }
+        }
+
+        $this->io->write(
+            sprintf('<info>Installing <comment>PhantomJs</comment> (v%s)</info>', $requestedVersion)
+        );
+
+        if (!$package = $this->downloadRelease($requestedVersion)) {
             return;
         }
 
@@ -137,16 +141,17 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         return false;
     }
 
-    public function getFileName()
+    public function getFileName($name = 'phantomjs')
     {
-        $name = 'phantomjs';
-
         return $this->getOS() === 'windows' ? $name . '.exe' : $name;
     }
 
-    public function downloadRelease($version, $targetDir)
+    public function downloadRelease($version)
     {
+        $targetDir = $this->getDownloadRoot($version);
+
         $downloadManager = $this->composer->getDownloadManager();
+
         $versions = $this->getVersionQueue($version);
 
         while ($version = array_shift($versions)) {
@@ -162,7 +167,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
                 $this->io->write('');
 
                 return $package;
-            } catch (TransportException $e) {
+            } catch (\Composer\Downloader\TransportException $e) {
                 if ($e->getStatusCode() === 404) {
                     continue;
                 }
@@ -195,9 +200,9 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
     public function createComposerInMemoryPackage($version, $targetDir)
     {
-        $remoteFile = $this->getURL($version);
+        $remoteFile = $this->getDownloadUrl($version);
 
-        $versionParser = new VersionParser();
+        $versionParser = new \Composer\Package\Version\VersionParser();
 
         $package = new \Composer\Package\Package(
             'phantomjs-binary',
@@ -375,7 +380,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         return str_replace('{{VERSION}}', $version, $template);
     }
 
-    public function getURL($version)
+    public function getDownloadUrl($version = '0.0.0')
     {
         $cdnUrl = $this->getCdnUrl($version);
 
