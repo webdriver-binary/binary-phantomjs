@@ -17,27 +17,32 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
     /**
      * @var \Composer\Composer
      */
-    protected $composer;
+    private $composer;
 
     /**
      * @var \Composer\IO\IOInterface
      */
-    protected $io;
+    private $io;
 
     /**
      * @var \Composer\Config
      */
-    protected $config;
+    private $config;
 
     /**
      * @var \Composer\Util\Filesystem
      */
-    protected $fileSystem;
+    private $fileSystem;
+
+    /**
+     * @var \Composer\Cache
+     */
+    private $cache;
 
     /**
      * @var \Composer\Package\CompletePackage
      */
-    protected $ownerPackage;
+    private $ownerPackage;
 
     public function activate(\Composer\Composer $composer, \Composer\IO\IOInterface $io)
     {
@@ -45,14 +50,9 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         $this->io = $io;
         $this->config = $this->composer->getConfig();
 
-        $this->fileSystem = new \Composer\Util\Filesystem();
-    }
-
-    public function getDownloadRoot($requestedVersion)
-    {
         $package = $this->getOwnerPackage();
 
-        $cache = new \Composer\Cache(
+        $this->cache = new \Composer\Cache(
             $this->io,
             implode(DIRECTORY_SEPARATOR, array(
                 $this->config->get('cache-dir'),
@@ -62,7 +62,14 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
             ))
         );
 
-        return rtrim($cache->getRoot(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $requestedVersion;
+        $this->fileSystem = new \Composer\Util\Filesystem();
+    }
+
+    public function getDownloadRoot($requestedVersion)
+    {
+        return rtrim($this->cache->getRoot(), DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . $requestedVersion;
     }
 
     public static function getSubscribedEvents()
@@ -311,10 +318,14 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
     public function installBinary(\Composer\Package\Package $package, $binDir)
     {
         $sourceDir = $package->getTargetDir();
-        $sourceDir = file_exists(DIRECTORY_SEPARATOR . $sourceDir) ? DIRECTORY_SEPARATOR . $sourceDir : $sourceDir;
+        $sourceDir = file_exists(DIRECTORY_SEPARATOR . $sourceDir)
+            ? (DIRECTORY_SEPARATOR . $sourceDir)
+            : $sourceDir;
 
         $matches = array();
-        foreach ($package->getBinaries() as $binary) {
+        $binaries = $package->getBinaries();
+
+        foreach ($binaries as $binary) {
             $globPattern = $sourceDir . DIRECTORY_SEPARATOR . '**' . DIRECTORY_SEPARATOR . $binary;
 
             $matches = array_merge(
@@ -324,17 +335,38 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
         }
 
         if (!$matches) {
-            $this->io->error(sprintf('Could not locate the binary "%s" from downloaded source', $file));
+            $this->io->error(
+                sprintf(
+                    'Could not locate the binaries (%s) from downloaded source',
+                    implode(
+                        ', ',
+                        array_unique(
+                            array_map(function ($item) {
+                                return basename($item);
+                            }, $binaries)
+                        )
+                    )
+                )
+            );
+
+            return array();
         }
 
-        $package->setBinaries(array_map(function ($path) use ($sourceDir) {
-            return ltrim(substr($path, strlen($sourceDir)), DIRECTORY_SEPARATOR);
-        }, $matches));
+        $executables = array_filter($matches, function ($path) {
+            return is_executable($path);
+        });
 
-        $binaryInstaller = new \Composer\Installer\BinaryInstaller($this->io, $binDir, 'full');
-        $binaryInstaller->installBinaries($package, $sourceDir);
+        $this->fileSystem->ensureDirectoryExists($binDir);
 
-        return $package->getBinaries();
+        foreach ($executables as $fromPath) {
+            $toPath = $binDir . DIRECTORY_SEPARATOR . basename($fromPath);
+
+            $this->fileSystem->copyThenRemove($fromPath, $toPath);
+
+            \Composer\Util\Silencer::call('chmod', $toPath, 0777 & ~umask());
+        }
+
+        return $matches;
     }
 
     function recursiveGlob($pattern, $flags = 0)
