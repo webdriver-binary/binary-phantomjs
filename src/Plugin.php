@@ -7,7 +7,10 @@
  * The content is released under the MIT License. Please view
  * the LICENSE file that was distributed with this source code.
  */
-namespace Vaimo\PhantomInstaller;
+namespace Lanfest\PhantomInstaller;
+
+use Composer\Composer;
+use Composer\IO\IOInterface;
 
 class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatcher\EventSubscriberInterface
 {
@@ -44,7 +47,7 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
      */
     private $ownerPackage;
 
-    public function activate(\Composer\Composer $composer, \Composer\IO\IOInterface $io)
+    public function activate(Composer $composer, IOInterface $io): void
     {
         $this->composer = $composer;
         $this->io = $io;
@@ -54,12 +57,12 @@ class Plugin implements \Composer\Plugin\PluginInterface, \Composer\EventDispatc
 
         $this->cache = new \Composer\Cache(
             $this->io,
-            implode(DIRECTORY_SEPARATOR, array(
+            implode(DIRECTORY_SEPARATOR, [
                 $this->config->get('cache-dir'),
                 'files',
                 $package->getName(),
-                'downloads'
-            ))
+                'downloads',
+            ])
         );
 
         $this->fileSystem = new \Composer\Util\Filesystem();

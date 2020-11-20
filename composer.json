@@ -1,25 +1,12 @@
 {
-    "name": "vaimo/binary-phantomjs",
+    "name": "lanfest/binary-phantomjs",
     "type": "composer-plugin",
     "license": "MIT",
     "description": "A Composer package which installs the PhantomJS binary (Linux, Windows, Mac) into `bin` of your project",
-    "authors": [
-        {
-            "name": "Jens-André Koch",
-            "email": "jakoch@web.de"
-        },
-        {
-            "name": "Allan Paiste",
-            "email": "allan.paiste@vaimo.com"
-        }
-    ],
     "require": {
-        "php": ">5.3",
-        "ext-openssl": "*",
-        "composer-plugin-api": "^1.0"
-    },
-    "require-dev": {
-        "composer/composer": "^1.2"
+        "php": ">=7.2",
+        "composer-plugin-api": "^1.0 | ^2.0",
+        "ext-openssl": "*"
     },
     "keywords": [
         "phantomjs",
@@ -29,12 +16,11 @@
         "phantom-installer"
     ],
     "extra": {
-        "class": "Vaimo\\PhantomInstaller\\Plugin",
-        "changelog-file": "changelog.json"
+        "class": "Lanfest\\PhantomInstaller\\Plugin"
     },
     "autoload": {
         "psr-4": {
-            "Vaimo\\PhantomInstaller\\": "src"
+            "Lanfest\\PhantomInstaller\\": "src"
         }
     }
 }
