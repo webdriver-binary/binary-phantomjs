@@ -1,5 +1,5 @@
 {
-    "name": "lanfest/binary-phantomjs",
+    "name": "webdriver-binary/binary-phantomjs",
     "type": "composer-plugin",
     "license": "MIT",
     "description": "A Composer package which installs the PhantomJS binary (Linux, Windows, Mac) into `bin` of your project",
@@ -7,6 +7,10 @@
         "php": ">=7.2",
         "composer-plugin-api": "^1.0 | ^2.0",
         "ext-openssl": "*"
+    },
+    "replace": {
+        "vaimo/binary-phantomjs": "*",
+        "lanfest/binary-phantomjs": "*"
     },
     "keywords": [
         "phantomjs",
@@ -16,11 +20,11 @@
         "phantom-installer"
     ],
     "extra": {
-        "class": "Lanfest\\PhantomInstaller\\Plugin"
+        "class": "WebdriverBinary\\PhantomInstaller\\Plugin"
     },
     "autoload": {
         "psr-4": {
-            "Lanfest\\PhantomInstaller\\": "src"
+            "WebdriverBinary\\PhantomInstaller\\": "src"
         }
     }
 }

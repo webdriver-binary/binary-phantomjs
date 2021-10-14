@@ -7,7 +7,7 @@
  * The content is released under the MIT License. Please view
  * the LICENSE file that was distributed with this source code.
  */
-namespace Lanfest\PhantomInstaller;
+namespace WebdriverBinary\PhantomInstaller;
 
 use Composer\Composer;
 use Composer\IO\IOInterface;
